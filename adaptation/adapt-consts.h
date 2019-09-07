@@ -11,6 +11,9 @@
 #define NDN_UDP_FACE_SOCKET_ERROR 1
 #define NDN_UNIX_FACE_SOCKET_ERROR 2
 
+/*khwu*/
+#define NDN_LORA_FACE_SOCKET_ERROR 3
+
 #define NDN_NFD_DEFAULT_ADDR "/var/run/nfd.sock"
 
 #endif // NDN_ADAPT_CONSTS_H
