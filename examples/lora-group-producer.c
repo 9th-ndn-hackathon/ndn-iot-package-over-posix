@@ -40,19 +40,19 @@ parseArgs(int argc, char *argv[])
     fprintf(stderr, "ERROR: wrong name.\n");
     return 4;
   }
-  
+
   strcpy(device, "/dev/ttyS0");
   baud = 2400;
-  
+
   if (argc >= 3) {
     sz_device = argv[2];
     if (strlen(sz_device) <= 0) {
       fprintf(stderr, "ERROR: wrong arguments.\n");
       return 1;
-    }      
+    }
     strcpy(device, sz_device);
   }
-  
+
   if (argc >= 4) {
     sz_baud = argv[3];
     if (strlen(sz_baud) <= 0) {
@@ -94,8 +94,7 @@ main(int argc, char *argv[])
     return ret;
   }
 
-  ndn_forwarder_init();
-  ndn_security_init();
+  ndn_lite_startup();
   face = ndn_lora_multicast_face_construct(device, baud);
 
   ndn_encoder_t encoder;
