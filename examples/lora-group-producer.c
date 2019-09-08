@@ -14,6 +14,8 @@
 #include <arpa/inet.h>
 /*#include "../adaptation/udp/udp-face.h"*/
 #include "../adaptation/lora/lora-face.h"
+#include "time.h"
+#include "sys/time.h"
 
 #include "ndn-lite/forwarder/forwarder.h"
 #include "ndn-lite/encode/data.h"
@@ -71,11 +73,13 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
   ndn_interest_from_block(&interest_pkt, interest, interest_size);
   ndn_data_t data;
   ndn_encoder_t encoder;
-  char * str = "I'm a Data packet.";
+  // char * str = "I'm a Data packet.";
+  char str[50];
+  set_data_content_to_timestr(str);
 
   printf("On interest\n");
   data.name = interest_pkt.name;
-  ndn_data_set_content(&data, (uint8_t*)str, strlen(str));
+  ndn_data_set_content(&data, (uint8_t*)str, strlen(str) + 1);
   ndn_metainfo_init(&data.metainfo);
   ndn_metainfo_set_content_type(&data.metainfo, NDN_CONTENT_TYPE_BLOB);
   encoder_init(&encoder, buf, 4096);
@@ -83,6 +87,16 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
   ndn_forwarder_put_data(encoder.output_value, encoder.offset);
 
   return NDN_FWD_STRATEGY_SUPPRESS;
+}
+
+void
+set_data_content_to_timestr(char *str)
+{
+  struct timespec ts;
+  struct tm *tm;
+  clock_gettime(CLOCK_REALTIME, &ts);
+  tm = localtime(&(ts.tv_sec));
+  sprintf(str, "The current time is: %02d:%02d:%02d\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
 }
 
 int
