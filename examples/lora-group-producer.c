@@ -40,19 +40,19 @@ parseArgs(int argc, char *argv[])
     fprintf(stderr, "ERROR: wrong name.\n");
     return 4;
   }
-
+  
   strcpy(device, "/dev/ttyS0");
   baud = 2400;
-
+  
   if (argc >= 3) {
     sz_device = argv[2];
     if (strlen(sz_device) <= 0) {
       fprintf(stderr, "ERROR: wrong arguments.\n");
       return 1;
-    }
+    }      
     strcpy(device, sz_device);
   }
-
+  
   if (argc >= 4) {
     sz_baud = argv[3];
     if (strlen(sz_baud) <= 0) {
@@ -67,7 +67,6 @@ parseArgs(int argc, char *argv[])
 int
 on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
 {
-  printf('Received interest\n');
   ndn_interest_t interest_pkt;
   ndn_interest_from_block(&interest_pkt, interest, interest_size);
   ndn_data_t data;
@@ -94,7 +93,8 @@ main(int argc, char *argv[])
     return ret;
   }
 
-  ndn_lite_startup();
+  ndn_forwarder_init();
+  ndn_security_init();
   face = ndn_lora_multicast_face_construct(device, baud);
 
   ndn_encoder_t encoder;

@@ -40,19 +40,19 @@ parseArgs(int argc, char *argv[])
     fprintf(stderr, "ERROR: wrong name.\n");
     return 4;
   }
-
+  
   strcpy(device, "/dev/ttyS0");
   baud = 2400;
-
+  
   if (argc >= 3) {
     sz_device = argv[2];
     if (strlen(sz_device) <= 0) {
       fprintf(stderr, "ERROR: wrong arguments.\n");
       return 1;
-    }
+    }      
     strcpy(device, sz_device);
   }
-
+  
   if (argc >= 4) {
     sz_baud = argv[3];
     if (strlen(sz_baud) <= 0) {
@@ -67,6 +67,10 @@ parseArgs(int argc, char *argv[])
 void
 on_data(const uint8_t* rawdata, uint32_t data_size, void* userdata)
 {
+  for (int i = 0; i < data_size; ++i)
+    printf("%02x ", rawdata[i]);
+  printf("\n");
+
   ndn_data_t data;
   printf("On data\n");
   if (ndn_data_tlv_decode_digest_verify(&data, rawdata, data_size)) {
@@ -95,7 +99,8 @@ main(int argc, char *argv[])
     return ret;
   }
 
-  ndn_lite_startup();
+  ndn_forwarder_init();
+  ndn_security_init();
   face = ndn_lora_multicast_face_construct(device, baud);
 
   encoder_init(&encoder, buf, NDN_LORA_BUFFER_SIZE);
@@ -105,6 +110,7 @@ main(int argc, char *argv[])
   ndn_interest_from_name(&interest, &name_prefix);
   encoder_init(&encoder, buf, NDN_LORA_BUFFER_SIZE);
   ndn_interest_tlv_encode(&encoder, &interest);
+  
   ndn_forwarder_express_interest(encoder.output_value, encoder.offset, on_data, on_timeout, NULL);
 
   running = true;

@@ -20,6 +20,8 @@
 #include <wiringPi.h>
 #include <wiringSerial.h>
 
+static uint8_t magic[4] = {0x80, 0xdb, 0xa9, 0x3e};
+
 static int
 ndn_lora_face_up(struct ndn_face_intf* self);
 
@@ -41,6 +43,11 @@ static void
 ndn_lora_face_recv(void *self, size_t param_len, void *param);
 
 /////////////////////////// /////////////////////////// ///////////////////////////
+
+static uint32_t byte_shift_left(uint32_t window, uint8_t input) {
+  // return (window << 8) | (uint32_t)input;
+  return (window >> 8) | (((uint32_t)input) << 24);
+}
 
 static int
 ndn_lora_face_up(struct ndn_face_intf* self){
@@ -99,13 +106,19 @@ static int
 ndn_lora_face_send(ndn_face_intf_t* self, const uint8_t* packet, uint32_t size){
   ndn_lora_face_t* ptr = (ndn_lora_face_t*)self;
   ssize_t ret;
+
+  for (int i = 0; i < size; ++i)
+    printf("%02x ", packet[i]);
+  printf("\n");
+  
   ret = write (ptr->fd, packet, size);
+  ret += write(ptr->fd, &magic, sizeof(magic)); 
   //khwu
   if (size > 0) {
     printf("send packet size: %d\n", size);
   }
     
-  if(ret != size){
+  if(ret != size + 4){
     return NDN_LORA_FACE_SOCKET_ERROR;
   }else{
     return NDN_SUCCESS;
@@ -161,10 +174,20 @@ ndn_lora_multicast_face_construct(
 //khwu
 static ssize_t recvfrom_lora (ndn_lora_face_t* ptr) {
     int buffPos = 0;
-    while (serialDataAvail(ptr->fd) > 0) {
+    uint32_t window = 0;
+    while (true) {
+    //while (serialDataAvail(ptr->fd) > 0) {
+        if (serialDataAvail(ptr->fd) == 0) {
+	  continue;
+	}
         ptr->buf[buffPos] = serialGetchar(ptr->fd);
+        window = byte_shift_left(window, ptr->buf[buffPos]);
         buffPos++;
-        // usleep(10000);
+	// printf("%02x %02x %02x %02x\n", *((uint8_t*)(&window) + 0), *((uint8_t*)(&window) + 1), *((uint8_t*)(&window) + 2), *((uint8_t*)(&window) + 3));
+        if (memcmp(&window, magic, sizeof(magic)) == 0) {
+            return buffPos - 4; // 4 is the number of bytes at the end of each packet.
+        }
+        //usleep(5000);
     }
 
     return buffPos;

@@ -52,3 +52,4 @@ ndn_lora_multicast_face_construct(
 #endif
 
 #endif
+
